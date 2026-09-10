@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Alert, App, Button, Card, Empty, Form, Input, Skeleton, Tag, Typography } from 'antd'
+import { Alert, App, Button, Card, Empty, Form, Input, Pagination, Skeleton, Tag, Typography } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import PageHeading from '../components/common/PageHeading'
 import { createApplication, listApplications } from '../services/api/applicationService'
@@ -7,21 +7,25 @@ import { getErrorMessage } from '../utils/errors'
 import { color } from '../theme/tokens'
 import type { Application } from '../types/domain'
 
+const PAGE_SIZE = 20
+
 export default function ApplicationsPage() {
   const { message } = App.useApp()
   const [form] = Form.useForm()
   const [apps, setApps] = useState<Application[] | null>(null)
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [justCreated, setJustCreated] = useState<Application | null>(null)
 
   function load() {
-    listApplications()
-      .then(setApps)
+    listApplications(page, PAGE_SIZE)
+      .then((data) => { setApps(data.items); setTotal(data.meta.total) })
       .catch((err) => setError(getErrorMessage(err)))
   }
 
-  useEffect(load, [])
+  useEffect(load, [page])
 
   async function handleSubmit(values: { code: string; name: string }) {
     setSubmitting(true)
@@ -123,6 +127,11 @@ export default function ApplicationsPage() {
               </li>
             ))}
           </ul>
+        )}
+        {apps !== null && apps.length > 0 && (
+          <div className="flex justify-end px-5 py-4">
+            <Pagination current={page} pageSize={PAGE_SIZE} total={total} hideOnSinglePage showSizeChanger={false} onChange={setPage} />
+          </div>
         )}
       </div>
     </div>

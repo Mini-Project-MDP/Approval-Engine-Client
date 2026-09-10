@@ -1,10 +1,12 @@
 import { axiosClient } from './axiosClient'
-import type { ApiEnvelope } from '../../types/api'
+import type { ApiEnvelope, PagedData } from '../../types/api'
 import type { Application } from '../../types/domain'
 
-export async function listApplications(): Promise<Application[]> {
-  const { data } = await axiosClient.get<ApiEnvelope<Application[]>>('/applications')
-  return data.data ?? []
+export async function listApplications(page = 1, limit = 20): Promise<PagedData<Application>> {
+  const { data } = await axiosClient.get<ApiEnvelope<PagedData<Application>>>('/applications', {
+    params: { page, limit },
+  })
+  return data.data ?? { items: [], meta: { page, limit, total: 0, total_pages: 1 } }
 }
 
 export interface CreateApplicationInput {

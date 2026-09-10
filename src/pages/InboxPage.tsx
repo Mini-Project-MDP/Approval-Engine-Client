@@ -32,11 +32,15 @@ function HowItWorks() {
   )
 }
 
+const PAGE_SIZE = 20
+
 export default function InboxPage() {
   const navigate = useNavigate()
   const screens = Grid.useBreakpoint()
   const { userId } = useCurrentUser()
   const [items, setItems] = useState<InboxItem[] | null>(null)
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
   const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(true)
   const [revision, setRevision] = useState(0)
@@ -47,22 +51,22 @@ export default function InboxPage() {
   useEffect(() => {
     if (!userId) return
     let cancelled = false
-    getInbox(userId)
-      .then((data) => { if (!cancelled) { setItems(data); setError(null) } })
+    getInbox(userId, page, PAGE_SIZE)
+      .then((data) => { if (!cancelled) { setItems(data.items); setTotal(data.meta.total); setError(null) } })
       .catch((err) => { if (!cancelled) setError(getErrorMessage(err)) })
       .finally(() => { if (!cancelled) setRefreshing(false) })
     return () => { cancelled = true }
-  }, [userId, revision])
+  }, [userId, page, revision])
 
   const stats = useMemo(() => {
     const list = items ?? []
     return {
-      count: list.length,
+      count: total,
       apps: new Set(list.map((item) => item.request.app_id)).size,
       totalAmount: list.reduce((sum, item) => sum + (payloadAmount(item.request.payload) ?? 0), 0),
       oldest: [...list].sort((a, b) => parseServerDate(a.request.created_at).getTime() - parseServerDate(b.request.created_at).getTime())[0],
     }
-  }, [items])
+  }, [items, total])
   const filtered = useMemo(() => (items ?? [])
     .filter((item) => (!docType || item.request.doc_type === docType) &&
       [item.request.resource_id, item.request.requester_id, item.request.app_id, item.request.doc_type, item.step_name].some((value) => value.toLowerCase().includes(query)))
@@ -91,19 +95,19 @@ export default function InboxPage() {
       {error && <Alert className="mb-5" type="error" showIcon message="Permintaan belum dapat dimuat" description={<>{error} Pilih Muat ulang untuk mencoba kembali.{items && ' Daftar di bawah menampilkan data terakhir yang berhasil dimuat.'}</>} />}
       {items === null ? (!error && <div className="ae-panel p-6"><Skeleton active paragraph={{ rows: 6 }} /></div>) : <>
         <dl className="inbox-summary" aria-label="Ringkasan kotak masuk">
-          <div><dt>Menunggu persetujuan</dt><dd>{stats.count} <span className="text-sm font-normal">permintaan</span></dd><small>Dari {stats.apps} aplikasi terhubung</small></div>
-          <div><dt>Menunggu terlama</dt><dd>{stats.oldest ? relativeTime(stats.oldest.request.created_at) : '—'}</dd><small>{stats.oldest?.request.resource_id ?? 'Tidak ada permintaan tertunda'}</small></div>
-          <div><dt>Total nilai permintaan</dt><dd>{formatRupiah(stats.totalAmount)}</dd><small>Akumulasi nilai yang tercantum</small></div>
+          <div><dt>Menunggu persetujuan</dt><dd>{stats.count} <span className="text-sm font-normal">permintaan</span></dd><small>Dari {stats.apps} aplikasi di halaman ini</small></div>
+          <div><dt>Menunggu terlama (halaman ini)</dt><dd>{stats.oldest ? relativeTime(stats.oldest.request.created_at) : '—'}</dd><small>{stats.oldest?.request.resource_id ?? 'Tidak ada permintaan tertunda'}</small></div>
+          <div><dt>Nilai permintaan (halaman ini)</dt><dd>{formatRupiah(stats.totalAmount)}</dd><small>Akumulasi nilai di halaman ini</small></div>
         </dl>
         <section className="ae-panel" aria-label="Daftar permintaan">
           <div className="inbox-toolbar">
             <div style={{ flex: 1 }}><label htmlFor="inbox-search">Cari permintaan</label><Input id="inbox-search" prefix={<SearchOutlined />} placeholder="Nomor permintaan, pemohon, atau aplikasi" value={search} onChange={(event) => setSearch(event.target.value)} allowClear /></div>
             <div style={{ width: 230 }}><label htmlFor="inbox-doc-type">Jenis dokumen</label><Select id="inbox-doc-type" style={{ width: '100%' }} placeholder="Semua jenis dokumen" value={docType} onChange={setDocType} allowClear options={[...new Set(items.map((item) => item.request.doc_type))].map((value) => ({ value, label: value.replaceAll('_', ' ') }))} /></div>
           </div>
-          <div className="flex flex-wrap justify-between gap-2 px-5 py-3 text-xs text-[var(--ae-text-secondary)]"><span role="status">{filtered.length} dari {items.length} permintaan</span><span>Urutan awal: pengajuan terlama</span></div>
+          <div className="flex flex-wrap justify-between gap-2 px-5 py-3 text-xs text-[var(--ae-text-secondary)]"><span role="status">{filtered.length} dari {items.length} permintaan di halaman ini · {total} total menunggu</span><span>Urutan awal: pengajuan terlama</span></div>
           <Table className="inbox-table" columns={columns} dataSource={filtered} rowKey={(item) => item.assignment.id} scroll={screens.md ? { x: 920 } : undefined}
             onRow={(item) => ({ style: { cursor: 'pointer' }, onClick: (event) => { if (!(event.target as HTMLElement).closest('a, button')) navigate(`/requests/${item.request.id}`) } })}
-            pagination={{ pageSize: 10, hideOnSinglePage: true, showSizeChanger: false }}
+            pagination={{ current: page, pageSize: PAGE_SIZE, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
             locale={{ emptyText: <div className="py-8"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={items.length === 0 ? <><strong>Tidak ada permintaan yang menunggu</strong><p className="mt-2">Permintaan akan tersedia saat Anda mendapat giliran persetujuan.<br />Pilih Muat ulang untuk memeriksa permintaan terbaru.</p></> : <><strong>Tidak ada hasil yang sesuai</strong><p className="mt-2">Coba kata kunci lain atau hapus filter pencarian.</p></>} />{items.length > 0 && <Button className="mt-3" onClick={() => { setSearch(''); setDocType(undefined) }}>Hapus filter</Button>}</div> }} />
         </section>
         <HowItWorks />

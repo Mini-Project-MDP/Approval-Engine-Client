@@ -9,25 +9,29 @@ import { getErrorMessage } from '../utils/errors'
 import PageHeading from '../components/common/PageHeading'
 import type { WorkflowDefinition } from '../types/domain'
 
+const PAGE_SIZE = 20
+
 export default function WorkflowListPage() {
   const { message } = App.useApp()
   const navigate = useNavigate()
   const [workflows, setWorkflows] = useState<WorkflowDefinition[] | null>(null)
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
   const [appNames, setAppNames] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
 
   function load() {
-    listWorkflows()
-      .then(setWorkflows)
+    listWorkflows(undefined, page, PAGE_SIZE)
+      .then((data) => { setWorkflows(data.items); setTotal(data.meta.total) })
       .catch((err) => setError(getErrorMessage(err)))
-    listApplications()
-      .then((apps) => setAppNames(Object.fromEntries(apps.map((a) => [a.id, a.name]))))
+    listApplications(1, 100)
+      .then((data) => setAppNames(Object.fromEntries(data.items.map((a) => [a.id, a.name]))))
       .catch(() => {
         // Non-fatal: worst case the table falls back to showing raw app ids.
       })
   }
 
-  useEffect(load, [])
+  useEffect(load, [page])
 
   async function handleDeactivate(id: string) {
     try {
@@ -111,7 +115,8 @@ export default function WorkflowListPage() {
             </Empty>
           </div>
         ) : (
-          <Table columns={columns} dataSource={workflows} rowKey="id" pagination={false} scroll={{ x: 640 }} />
+          <Table columns={columns} dataSource={workflows} rowKey="id" scroll={{ x: 640 }}
+            pagination={{ current: page, pageSize: PAGE_SIZE, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }} />
         )}
       </div>
     </div>

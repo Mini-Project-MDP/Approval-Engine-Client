@@ -1,12 +1,12 @@
 import { axiosClient } from './axiosClient'
-import type { ApiEnvelope } from '../../types/api'
+import type { ApiEnvelope, PagedData } from '../../types/api'
 import type { ApprovalMode, Condition, OnEmpty, ResolverRule, WorkflowDefinition } from '../../types/domain'
 
-export async function listWorkflows(appId?: string): Promise<WorkflowDefinition[]> {
-  const { data } = await axiosClient.get<ApiEnvelope<WorkflowDefinition[]>>('/workflows', {
-    params: appId ? { app_id: appId } : undefined,
+export async function listWorkflows(appId?: string, page = 1, limit = 20): Promise<PagedData<WorkflowDefinition>> {
+  const { data } = await axiosClient.get<ApiEnvelope<PagedData<WorkflowDefinition>>>('/workflows', {
+    params: { app_id: appId || undefined, page, limit },
   })
-  return data.data ?? []
+  return data.data ?? { items: [], meta: { page, limit, total: 0, total_pages: 1 } }
 }
 
 export async function getWorkflow(id: string): Promise<WorkflowDefinition> {

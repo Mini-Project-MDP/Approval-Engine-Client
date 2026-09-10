@@ -29,10 +29,10 @@ export default function WorkflowFormPage() {
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    listApplications()
-      .then((list) => {
-        setApps(list)
-        if (list.length > 0) form.setFieldValue('app_id', list[0].id)
+    listApplications(1, 100)
+      .then((data) => {
+        setApps(data.items)
+        if (data.items.length > 0) form.setFieldValue('app_id', data.items[0].id)
       })
       .catch((err) => setError(getErrorMessage(err)))
       .finally(() => setLoadingApps(false))
