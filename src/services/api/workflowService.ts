@@ -39,3 +39,7 @@ export async function publishWorkflow(input: PublishWorkflowInput): Promise<Work
 export async function deactivateWorkflow(id: string): Promise<void> {
   await axiosClient.post(`/portal/workflows/${encodeURIComponent(id)}/deactivate`)
 }
+
+export async function activateWorkflow(id: string): Promise<void> {
+  await axiosClient.post(`/portal/workflows/${encodeURIComponent(id)}/activate`)
+}

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { App, Button, Empty, Popconfirm, Skeleton, Table, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { PlusOutlined } from '@ant-design/icons'
-import { deactivateWorkflow, listWorkflows } from '../services/api/workflowService'
+import { activateWorkflow, deactivateWorkflow, listWorkflows } from '../services/api/workflowService'
 import { listApplications } from '../services/api/applicationService'
 import { getErrorMessage } from '../utils/errors'
 import PageHeading from '../components/common/PageHeading'
@@ -43,6 +43,16 @@ export default function WorkflowListPage() {
     }
   }
 
+  async function handleActivate(id: string) {
+    try {
+      await activateWorkflow(id)
+      message.success('Workflow diaktifkan kembali')
+      load()
+    } catch (err) {
+      message.error(getErrorMessage(err))
+    }
+  }
+
   const columns: ColumnsType<WorkflowDefinition> = useMemo(
     () => [
       {
@@ -74,7 +84,7 @@ export default function WorkflowListPage() {
             <Button type="link" size="small" onClick={() => navigate(`/workflows/${w.id}/edit`)}>
               Edit
             </Button>
-            {w.is_active && (
+            {w.is_active ? (
               <Popconfirm
                 title={`Nonaktifkan "${w.name}"?`}
                 description="Request yang sedang berjalan tidak terpengaruh."
@@ -87,12 +97,24 @@ export default function WorkflowListPage() {
                   Nonaktifkan
                 </Button>
               </Popconfirm>
+            ) : (
+              <Popconfirm
+                title={`Aktifkan kembali "${w.name}" v${w.version}?`}
+                description="Versi lain yang sedang aktif untuk jenis dokumen ini akan dinonaktifkan."
+                okText="Ya, aktifkan"
+                cancelText="Batal"
+                onConfirm={() => handleActivate(w.id)}
+              >
+                <Button type="link" size="small">
+                  Aktifkan kembali
+                </Button>
+              </Popconfirm>
             )}
           </div>
         ),
       },
     ],
-    [appNames, handleDeactivate, navigate],
+    [appNames, handleActivate, handleDeactivate, navigate],
   )
 
   return (
