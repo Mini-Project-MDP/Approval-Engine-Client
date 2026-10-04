@@ -86,6 +86,9 @@ export interface WorkflowStep {
   name: string
   resolver_rule: ResolverRule
   condition?: Condition | null
+  // Compound conditions can only be published through the API; the form
+  // edits the single `condition` field only.
+  conditions?: Condition[] | null
   approval_mode: ApprovalMode
   on_empty: OnEmpty
 }

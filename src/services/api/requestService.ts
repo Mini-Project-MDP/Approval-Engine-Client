@@ -3,7 +3,7 @@ import type { ApiEnvelope } from '../../types/api'
 import type { ApprovalRequest, Decision } from '../../types/domain'
 
 export async function getRequest(id: string): Promise<ApprovalRequest> {
-  const { data } = await axiosClient.get<ApiEnvelope<ApprovalRequest>>(`/requests/${encodeURIComponent(id)}`)
+  const { data } = await axiosClient.get<ApiEnvelope<ApprovalRequest>>(`/portal/requests/${encodeURIComponent(id)}`)
   if (!data.data) throw new Error(data.error ?? 'request not found')
   return data.data
 }
@@ -16,7 +16,7 @@ export interface DecisionInput {
 
 export async function decideRequest(id: string, input: DecisionInput): Promise<ApprovalRequest> {
   const { data } = await axiosClient.post<ApiEnvelope<ApprovalRequest>>(
-    `/requests/${encodeURIComponent(id)}/decision`,
+    `/portal/requests/${encodeURIComponent(id)}/decision`,
     input,
   )
   if (!data.data) throw new Error(data.error ?? 'failed to record decision')

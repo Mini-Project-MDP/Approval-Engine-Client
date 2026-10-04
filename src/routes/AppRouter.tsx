@@ -47,6 +47,14 @@ export default function AppRouter() {
             }
           />
           <Route
+            path="/workflows/:id/edit"
+            element={
+              <RequireAuth>
+                <WorkflowFormPage />
+              </RequireAuth>
+            }
+          />
+          <Route
             path="/applications"
             element={
               <RequireAuth>

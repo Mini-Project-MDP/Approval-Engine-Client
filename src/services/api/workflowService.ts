@@ -3,14 +3,14 @@ import type { ApiEnvelope, PagedData } from '../../types/api'
 import type { ApprovalMode, Condition, OnEmpty, ResolverRule, WorkflowDefinition } from '../../types/domain'
 
 export async function listWorkflows(appId?: string, page = 1, limit = 20): Promise<PagedData<WorkflowDefinition>> {
-  const { data } = await axiosClient.get<ApiEnvelope<PagedData<WorkflowDefinition>>>('/workflows', {
+  const { data } = await axiosClient.get<ApiEnvelope<PagedData<WorkflowDefinition>>>('/portal/workflows', {
     params: { app_id: appId || undefined, page, limit },
   })
   return data.data ?? { items: [], meta: { page, limit, total: 0, total_pages: 1 } }
 }
 
 export async function getWorkflow(id: string): Promise<WorkflowDefinition> {
-  const { data } = await axiosClient.get<ApiEnvelope<WorkflowDefinition>>(`/workflows/${encodeURIComponent(id)}`)
+  const { data } = await axiosClient.get<ApiEnvelope<WorkflowDefinition>>(`/portal/workflows/${encodeURIComponent(id)}`)
   if (!data.data) throw new Error(data.error ?? 'workflow not found')
   return data.data
 }
@@ -31,11 +31,11 @@ export interface PublishWorkflowInput {
 }
 
 export async function publishWorkflow(input: PublishWorkflowInput): Promise<WorkflowDefinition> {
-  const { data } = await axiosClient.post<ApiEnvelope<WorkflowDefinition>>('/workflows', input)
+  const { data } = await axiosClient.post<ApiEnvelope<WorkflowDefinition>>('/portal/workflows', input)
   if (!data.data) throw new Error(data.error ?? 'failed to publish workflow')
   return data.data
 }
 
 export async function deactivateWorkflow(id: string): Promise<void> {
-  await axiosClient.post(`/workflows/${encodeURIComponent(id)}/deactivate`)
+  await axiosClient.post(`/portal/workflows/${encodeURIComponent(id)}/deactivate`)
 }

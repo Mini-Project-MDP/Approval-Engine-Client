@@ -2,7 +2,8 @@ import { defineConfig, devices } from '@playwright/test'
 
 // The Go backend is NOT started by this config — it must already be running
 // (`go run ./cmd/api` in Approval-Engine-Service, with DATABASE_URL set)
-// before running these tests, since the suite seeds its own fixture data
+// before running these tests (with ADMIN_API_KEY set, and E2E_ADMIN_KEY set to
+// the same value here), since the suite seeds its own fixture data
 // against the real API rather than relying on manually-seeded demo data.
 export default defineConfig({
   testDir: './e2e',

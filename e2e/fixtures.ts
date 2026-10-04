@@ -5,6 +5,10 @@ import type { APIRequestContext } from '@playwright/test'
 // sync.
 const API_BASE = 'http://localhost:5173/api/v1'
 
+// /participants/import is operator-only on the engine (X-Admin-Key). Run the
+// suite with the same E2E_ADMIN_KEY as the backend's ADMIN_API_KEY.
+const ADMIN_KEY = process.env.E2E_ADMIN_KEY ?? ''
+
 let counter = 0
 
 /**
@@ -26,7 +30,7 @@ export interface SeededApp {
 }
 
 export async function registerApplication(request: APIRequestContext, name: string): Promise<SeededApp> {
-  const res = await request.post(`${API_BASE}/applications`, {
+  const res = await request.post(`${API_BASE}/portal/applications`, {
     data: { code: uniqueId('app'), name },
   })
   const body = await res.json()
@@ -46,7 +50,10 @@ export interface SeedParticipant {
 }
 
 export async function importParticipants(request: APIRequestContext, participants: SeedParticipant[]): Promise<void> {
-  const res = await request.post(`${API_BASE}/participants/import`, { data: { participants } })
+  const res = await request.post(`${API_BASE}/participants/import`, {
+    data: { participants },
+    headers: { 'X-Admin-Key': ADMIN_KEY },
+  })
   if (!res.ok()) {
     throw new Error(`failed to import participants: ${res.status()} ${await res.text()}`)
   }
@@ -63,7 +70,7 @@ export async function publishWorkflow(
   request: APIRequestContext,
   input: PublishWorkflowInput,
 ): Promise<{ id: string }> {
-  const res = await request.post(`${API_BASE}/workflows`, { data: input })
+  const res = await request.post(`${API_BASE}/portal/workflows`, { data: input })
   const body = await res.json()
   if (!res.ok() || !body.data) {
     throw new Error(`failed to publish workflow: ${res.status()} ${JSON.stringify(body)}`)

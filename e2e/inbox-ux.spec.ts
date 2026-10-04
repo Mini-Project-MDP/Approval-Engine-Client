@@ -15,8 +15,8 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('search and document filter combine, clear, and open a request with the keyboard', async ({ page }) => {
-  await page.route('**/api/v1/inbox/*', (route) => route.fulfill({ json: { data: items } }))
-  await page.route('**/api/v1/requests/request-0', (route) => route.fulfill({ json: { data: items[0].request } }))
+  await page.route('**/api/v1/portal/inbox/*', (route) => route.fulfill({ json: { data: items } }))
+  await page.route('**/api/v1/portal/requests/request-0', (route) => route.fulfill({ json: { data: items[0].request } }))
   await page.goto('/inbox')
   await expect(page.getByRole('status')).toHaveText('2 dari 2 permintaan')
   await page.getByLabel('Cari permintaan').fill('sa01')
@@ -36,7 +36,7 @@ test('search and document filter combine, clear, and open a request with the key
 
 test('failed inbox loading can be retried and empty guidance remains available', async ({ page }) => {
   let unavailable = true
-  await page.route('**/api/v1/inbox/*', (route) => {
+  await page.route('**/api/v1/portal/inbox/*', (route) => {
     return unavailable ? route.fulfill({ status: 503, json: { message: 'Layanan tidak tersedia' } }) : route.fulfill({ json: { data: [] } })
   })
   await page.goto('/inbox')
@@ -56,9 +56,9 @@ test('failed inbox loading can be retried and empty guidance remains available',
 
 test('mobile navigation overlays content, closes after navigation, and fits the viewport', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 })
-  await page.route('**/api/v1/inbox/*', (route) => route.fulfill({ json: { data: items } }))
-  await page.route('**/api/v1/workflows', (route) => route.fulfill({ json: { data: [] } }))
-  await page.route('**/api/v1/applications', (route) => route.fulfill({ json: { data: [] } }))
+  await page.route('**/api/v1/portal/inbox/*', (route) => route.fulfill({ json: { data: items } }))
+  await page.route('**/api/v1/portal/workflows', (route) => route.fulfill({ json: { data: [] } }))
+  await page.route('**/api/v1/portal/applications', (route) => route.fulfill({ json: { data: [] } }))
   await page.goto('/inbox')
   await expect(page.getByRole('status')).toHaveText('2 dari 2 permintaan')
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
@@ -77,7 +77,7 @@ test('mobile navigation overlays content, closes after navigation, and fits the 
 })
 
 test('direct workflow form loads retain component styling and visible field labels', async ({ page }) => {
-  await page.route('**/api/v1/applications', (route) => route.fulfill({ json: { data: [{ id: 'app-1', code: 'asset', name: 'Asset Management', is_active: true }] } }))
+  await page.route('**/api/v1/portal/applications', (route) => route.fulfill({ json: { data: [{ id: 'app-1', code: 'asset', name: 'Asset Management', is_active: true }] } }))
   await page.goto('/workflows/new')
   await expect(page.getByLabel('Nama workflow')).toBeVisible()
   await expect(page.locator('.ant-card-body').first()).toHaveCSS('padding', '24px')

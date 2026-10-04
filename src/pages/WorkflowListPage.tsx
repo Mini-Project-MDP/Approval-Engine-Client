@@ -69,24 +69,30 @@ export default function WorkflowListPage() {
         title: '',
         key: 'action',
         align: 'right',
-        render: (_, w) =>
-          w.is_active && (
-            <Popconfirm
-              title={`Nonaktifkan "${w.name}"?`}
-              description="Request yang sedang berjalan tidak terpengaruh."
-              okText="Ya, nonaktifkan"
-              cancelText="Batal"
-              okButtonProps={{ danger: true }}
-              onConfirm={() => handleDeactivate(w.id)}
-            >
-              <Button type="link" danger size="small">
-                Nonaktifkan
-              </Button>
-            </Popconfirm>
-          ),
+        render: (_, w) => (
+          <div className="flex justify-end gap-1">
+            <Button type="link" size="small" onClick={() => navigate(`/workflows/${w.id}/edit`)}>
+              Edit
+            </Button>
+            {w.is_active && (
+              <Popconfirm
+                title={`Nonaktifkan "${w.name}"?`}
+                description="Request yang sedang berjalan tidak terpengaruh."
+                okText="Ya, nonaktifkan"
+                cancelText="Batal"
+                okButtonProps={{ danger: true }}
+                onConfirm={() => handleDeactivate(w.id)}
+              >
+                <Button type="link" danger size="small">
+                  Nonaktifkan
+                </Button>
+              </Popconfirm>
+            )}
+          </div>
+        ),
       },
     ],
-    [appNames, handleDeactivate],
+    [appNames, handleDeactivate, navigate],
   )
 
   return (
